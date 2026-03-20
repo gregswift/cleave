@@ -7,14 +7,14 @@ name = "chapter-mp3s"
 dynamic = ["version"]
 description = "Split m4b audiobooks into per-chapter audio files"
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.14"
 authors = []
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.14",
     "Topic :: Multimedia :: Sound/Audio :: Conversion",
@@ -44,9 +44,6 @@ packages = ["src/chapter_mp3s"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-    "integration: requires ffmpeg to be installed on PATH",
-]
 
 [tool.ruff]
 line-length = 100

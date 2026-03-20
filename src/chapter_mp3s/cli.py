@@ -7,7 +7,6 @@ from pathlib import Path
 
 import click
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from . import __version__
 from .converter import FORMATS, convert_file
@@ -49,7 +48,10 @@ console = Console(stderr=True)
     default=2,
     show_default=True,
     metavar="0-9",
-    help="MP3 VBR quality level. 0 = best quality / largest file, 9 = smallest. Ignored for --format aac.",
+    help=(
+        "MP3 VBR quality level. 0 = best quality / largest file, "
+        "9 = smallest. Ignored for --format aac."
+    ),
 )
 @click.option(
     "--dry-run",
@@ -82,7 +84,39 @@ def main(
       chapter-mp3s --format aac --output-dir ./out book.m4b
       chapter-mp3s --quality 0 --overwrite *.m4b
     """
-    raise NotImplementedError
+    had_error = False
+
+    for input_path in inputs:
+        dry_label = " [dim](dry run)[/dim]" if dry_run else ""
+        console.print(f"\n[bold]{input_path.name}[/bold]{dry_label}")
+
+        try:
+            with console.status("Converting...", spinner="dots"):
+                outputs = convert_file(
+                    input_path,
+                    output_dir=output_dir,
+                    fmt=fmt,
+                    quality=quality,
+                    dry_run=dry_run,
+                    overwrite=overwrite,
+                )
+        except FileNotFoundError as exc:
+            console.print(f"  [red]error:[/red] {exc}")
+            had_error = True
+            continue
+        except ValueError as exc:
+            console.print(f"  [red]error:[/red] {exc}")
+            had_error = True
+            continue
+
+        for path in outputs:
+            if dry_run:
+                console.print(f"  [dim]~[/dim] {path.name}")
+            else:
+                console.print(f"  [green]✓[/green] {path.name}")
+
+    if had_error:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

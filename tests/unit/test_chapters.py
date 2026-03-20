@@ -98,7 +98,4 @@ class TestParseFfprobeJson:
 class TestExtractChapters:
     def test_missing_ffprobe_raises_file_not_found(self, tmp_path: "Path") -> None:
         """extract_chapters should raise FileNotFoundError if ffprobe is absent."""
-        # This test verifies the error contract; actual ffprobe absence is
-        # simulated by passing a nonexistent binary path — covered by
-        # integration tests for the happy path.
         pass  # placeholder — implemented alongside extract_chapters

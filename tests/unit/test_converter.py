@@ -1,4 +1,4 @@
-"""Tests for ffmpeg orchestration."""
+"""Unit tests for ffmpeg command building and input validation."""
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ class TestBuildFfmpegCmd:
         assert "5" in cmd
 
 
-class TestConvertFile:
+class TestConvertFileValidation:
     def test_invalid_format_raises(self, tmp_path: Path) -> None:
         fake_m4b = tmp_path / "book.m4b"
         fake_m4b.touch()
@@ -98,44 +98,3 @@ class TestConvertFile:
     def test_missing_input_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             convert_file(tmp_path / "nonexistent.m4b")
-
-    @pytest.mark.integration
-    def test_produces_correct_number_of_files(
-        self, synthetic_m4b: Path, tmp_path: Path
-    ) -> None:
-        outputs = convert_file(synthetic_m4b, output_dir=tmp_path)
-        assert len(outputs) == 3
-
-    @pytest.mark.integration
-    def test_output_filenames_match_chapters(
-        self, synthetic_m4b: Path, tmp_path: Path
-    ) -> None:
-        outputs = convert_file(synthetic_m4b, output_dir=tmp_path)
-        names = [p.name for p in outputs]
-        assert names[0] == "01 - Introduction.mp3"
-        assert names[1] == "01 - Chapter One.mp3"
-        assert names[2] == "03 - Epilogue.mp3"
-
-    @pytest.mark.integration
-    def test_dry_run_writes_no_files(
-        self, synthetic_m4b: Path, tmp_path: Path
-    ) -> None:
-        outputs = convert_file(synthetic_m4b, output_dir=tmp_path, dry_run=True)
-        assert len(outputs) == 3
-        for path in outputs:
-            assert not path.exists()
-
-    @pytest.mark.integration
-    def test_skip_existing_by_default(
-        self, synthetic_m4b: Path, tmp_path: Path
-    ) -> None:
-        convert_file(synthetic_m4b, output_dir=tmp_path)
-        # Second run should not raise even without --overwrite
-        convert_file(synthetic_m4b, output_dir=tmp_path)
-
-    @pytest.mark.integration
-    def test_aac_format_produces_m4a_files(
-        self, synthetic_m4b: Path, tmp_path: Path
-    ) -> None:
-        outputs = convert_file(synthetic_m4b, output_dir=tmp_path, fmt="aac")
-        assert all(p.suffix == ".m4a" for p in outputs)

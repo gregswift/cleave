@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 from pathlib import Path
 
 from .chapters import Chapter, extract_chapters
@@ -64,7 +66,61 @@ def convert_file(
         ValueError:        If *fmt* is not a recognised format, if *quality*
                            is outside 0–9, or if ffmpeg exits non-zero.
     """
-    raise NotImplementedError
+    if fmt not in FORMATS:
+        raise ValueError(f"Invalid format {fmt!r}. Must be one of: {', '.join(FORMATS)}")
+    if not 0 <= quality <= 9:
+        raise ValueError(f"Invalid quality {quality!r}. Must be between 0 and 9 inclusive.")
+
+    input_path = Path(input_path)
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+
+    resolved_output_dir = Path(output_dir) if output_dir is not None else input_path.parent
+    resolved_output_dir.mkdir(parents=True, exist_ok=True)
+
+    chapters = extract_chapters(input_path)
+    if not chapters:
+        book_tags = read_book_tags(input_path)
+        title = book_tags["title"] or input_path.stem
+        duration = _get_duration(input_path)
+        chapters = [Chapter(index=1, title=title, start=0.0, end=duration)]
+    else:
+        book_tags = read_book_tags(input_path)
+
+    ext = EXTENSIONS[fmt]
+    outputs: list[Path] = []
+
+    for chapter in chapters:
+        output_path = resolved_output_dir / f"{chapter.output_stem()}{ext}"
+        outputs.append(output_path)
+
+        if output_path.exists() and not overwrite:
+            continue
+        if dry_run:
+            continue
+
+        cmd = _build_ffmpeg_cmd(
+            input_path, chapter, output_path,
+            fmt=fmt, quality=quality, overwrite=overwrite,
+        )
+        _run_ffmpeg(cmd)
+
+        if fmt == "mp3":
+            write_tags(
+                output_path, chapter,
+                book_title=book_tags["title"],
+                author=book_tags["author"],
+                track_total=len(chapters),
+            )
+        else:
+            write_aac_tags(
+                output_path, chapter,
+                book_title=book_tags["title"],
+                author=book_tags["author"],
+                track_total=len(chapters),
+            )
+
+    return outputs
 
 
 def _build_ffmpeg_cmd(
@@ -89,7 +145,23 @@ def _build_ffmpeg_cmd(
     Returns:
         List of strings suitable for passing to :func:`subprocess.run`.
     """
-    raise NotImplementedError
+    cmd = ["ffmpeg"]
+    if overwrite:
+        cmd.append("-y")
+
+    cmd += [
+        "-i", str(input_path),
+        "-ss", str(chapter.start),
+        "-t", str(chapter.duration),
+    ]
+
+    if fmt == "mp3":
+        cmd += ["-c:a", "libmp3lame", "-q:a", str(quality)]
+    else:
+        cmd += ["-c:a", "copy"]
+
+    cmd.append(str(output_path))
+    return cmd
 
 
 def _run_ffmpeg(cmd: list[str]) -> None:
@@ -102,4 +174,35 @@ def _run_ffmpeg(cmd: list[str]) -> None:
         FileNotFoundError: If ffmpeg is not on PATH.
         ValueError:        If ffmpeg exits with a non-zero return code.
     """
-    raise NotImplementedError
+    try:
+        result = subprocess.run(cmd, capture_output=True, check=False)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "ffmpeg not found. Please install ffmpeg: https://ffmpeg.org/download.html"
+        ) from None
+
+    if result.returncode != 0:
+        raise ValueError(
+            f"ffmpeg exited with status {result.returncode}:\n"
+            f"{result.stderr.decode(errors='replace').strip()}"
+        )
+
+
+def _get_duration(path: Path) -> float:
+    """Return the total duration of an audio file in seconds via ffprobe."""
+    result = subprocess.run(
+        [
+            "ffprobe", "-v", "quiet",
+            "-print_format", "json",
+            "-show_format",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    try:
+        data = json.loads(result.stdout)
+        return float(data["format"]["duration"])
+    except (json.JSONDecodeError, KeyError, ValueError) as exc:
+        raise ValueError(f"Could not determine duration of {path}: {exc}") from exc

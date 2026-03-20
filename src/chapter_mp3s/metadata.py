@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from mutagen.id3 import ID3, ID3NoHeaderError, TALB, TPE1, TRCK, TIT2
+from mutagen.mp4 import MP4
+
 from .chapters import Chapter
 
 
@@ -34,7 +37,19 @@ def write_tags(
         FileNotFoundError: If ``path`` does not exist.
         mutagen.MutagenError: If the file cannot be opened or written.
     """
-    raise NotImplementedError
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
+
+    try:
+        tags = ID3(path)
+    except ID3NoHeaderError:
+        tags = ID3()
+
+    tags.add(TIT2(encoding=3, text=chapter.title))
+    tags.add(TRCK(encoding=3, text=f"{chapter.index}/{track_total}"))
+    tags.add(TALB(encoding=3, text=book_title))
+    tags.add(TPE1(encoding=3, text=author))
+    tags.save(path)
 
 
 def write_aac_tags(
@@ -61,7 +76,18 @@ def write_aac_tags(
         FileNotFoundError: If ``path`` does not exist.
         mutagen.MutagenError: If the file cannot be opened or written.
     """
-    raise NotImplementedError
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
+
+    audio = MP4(str(path))
+    if audio.tags is None:
+        audio.add_tags()
+
+    audio.tags["\xa9nam"] = [chapter.title]       # Title
+    audio.tags["trkn"] = [(chapter.index, track_total)]
+    audio.tags["\xa9alb"] = [book_title]           # Album
+    audio.tags["\xa9ART"] = [author]               # Artist
+    audio.save()
 
 
 def read_book_tags(path: Path) -> dict[str, str]:
@@ -81,4 +107,11 @@ def read_book_tags(path: Path) -> dict[str, str]:
     Raises:
         FileNotFoundError: If ``path`` does not exist.
     """
-    raise NotImplementedError
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
+
+    audio = MP4(str(path))
+    tags = audio.tags or {}
+    title = str(tags.get("\xa9nam", [""])[0])
+    author = str(tags.get("\xa9ART", [""])[0])
+    return {"title": title, "author": author}

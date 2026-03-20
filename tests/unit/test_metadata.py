@@ -26,9 +26,6 @@ class TestWriteTags:
                 track_total=TRACK_TOTAL,
             )
 
-    # Happy-path tag verification lives in integration tests where a real
-    # (tiny) mp3 file is available.
-
 
 class TestWriteAacTags:
     def test_missing_file_raises(self, tmp_path: "Path") -> None:
@@ -48,8 +45,3 @@ class TestReadBookTags:
         missing = tmp_path / "ghost.m4b"
         with pytest.raises(FileNotFoundError):
             read_book_tags(missing)
-
-    def test_returns_dict_with_expected_keys(self, tmp_path: "Path") -> None:
-        # Once implemented, a real m4b with tags is used in integration tests.
-        # Here we only verify the contract on a missing file path.
-        pass

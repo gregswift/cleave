@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from dataclasses import dataclass
@@ -62,11 +63,16 @@ def extract_chapters(path: str | Path) -> list[Chapter]:
         Ordered list of :class:`Chapter` objects, one per chapter marker.
 
     Raises:
-        FileNotFoundError: If ``ffprobe`` is not found on ``PATH``.
+        FileNotFoundError: If ``path`` does not exist, or if ``ffprobe`` is
+                           not found on ``PATH``.
         ValueError:        If ``ffprobe`` exits with a non-zero status or
                            returns unexpected output.
     """
-    raise NotImplementedError
+    resolved = Path(path)
+    if not resolved.exists():
+        raise FileNotFoundError(f"Input file not found: {resolved}")
+    json_text = _run_ffprobe(resolved)
+    return _parse_ffprobe_json(json_text)
 
 
 def _run_ffprobe(path: Path) -> str:
@@ -82,7 +88,25 @@ def _run_ffprobe(path: Path) -> str:
         FileNotFoundError: If ffprobe is not on PATH.
         ValueError:        If ffprobe exits non-zero.
     """
-    raise NotImplementedError
+    cmd = [
+        "ffprobe",
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_chapters",
+        str(path),
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "ffprobe not found. Please install ffmpeg: https://ffmpeg.org/download.html"
+        ) from None
+
+    if result.returncode != 0:
+        raise ValueError(
+            f"ffprobe exited with status {result.returncode}:\n{result.stderr.strip()}"
+        )
+    return result.stdout
 
 
 def _parse_ffprobe_json(json_text: str) -> list[Chapter]:
@@ -97,4 +121,22 @@ def _parse_ffprobe_json(json_text: str) -> list[Chapter]:
     Raises:
         ValueError: If the JSON is malformed or missing expected keys.
     """
-    raise NotImplementedError
+    try:
+        data = json.loads(json_text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"ffprobe returned invalid JSON: {exc}") from exc
+
+    if "chapters" not in data:
+        raise ValueError(
+            f"ffprobe JSON missing 'chapters' key. Got keys: {list(data.keys())}"
+        )
+
+    chapters: list[Chapter] = []
+    for i, raw in enumerate(data["chapters"], start=1):
+        tags = raw.get("tags", {})
+        title = tags.get("title", "")
+        start = float(raw["start_time"])
+        end = float(raw["end_time"])
+        chapters.append(Chapter(index=i, title=title, start=start, end=end))
+
+    return chapters
