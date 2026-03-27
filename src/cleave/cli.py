@@ -125,8 +125,9 @@ def main(
     had_error = False
 
     for input_path in inputs:
+        dest = str(output_dir) if output_dir else "current directory"
         dry_label = " [dim](dry run)[/dim]" if dry_run else ""
-        console.print(f"\n[bold]{input_path.name}[/bold]{dry_label}")
+        console.print(f"\nCleaving [bold]{input_path.name}[/bold] to {dest}{dry_label}")
 
         if dry_run:
             try:
