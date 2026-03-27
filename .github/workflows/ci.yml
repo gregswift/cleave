@@ -6,13 +6,16 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  CI_MAKE_OVERRIDES: .github/.ci.include.mk
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: make lint-py
+      - run: make lint
 
   test-unit:
     name: Unit tests
