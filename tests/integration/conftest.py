@@ -8,16 +8,11 @@ from pathlib import Path
 import pytest
 
 
-def _ffmpeg_available() -> bool:
-    try:
-        subprocess.run(["ffmpeg", "-version"], check=True, capture_output=True)
-        return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return False
-
-
-if not _ffmpeg_available():
-    collect_ignore_glob = ["*.py"]
+# NOTE: We intentionally let integration tests fail hard (not skip) when
+# ffmpeg is absent. These tests must run in the test container
+# (Containerfile.test) which provides ffmpeg. A missing ffmpeg means the
+# environment is wrong, and we want that to surface as a CI failure rather
+# than silently passing with 0 tests run.
 
 
 @pytest.fixture(scope="session")
