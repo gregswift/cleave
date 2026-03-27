@@ -201,17 +201,21 @@ Docker and GNU Make are required. No local Python installation needed.
 # Set up the project (installs dependencies via uv in a container)
 make setup
 
+# Run all tests
+make test
+
+# Or run test suites separately
 # Run unit tests (no ffmpeg required)
 make test-unit
 
 # Run integration tests (ffmpeg required inside the container)
 make test-integration
 
-# Lint
-make lint-py
+# Lint (all linting)
+make lint
 
-# Build
-make build-python
+# Build (both python and container)
+make build
 ```
 
 ## Performance notes
