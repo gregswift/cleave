@@ -184,8 +184,8 @@ def _build_ffmpeg_cmd(
         cmd.append("-y")
 
     cmd += [
-        "-i", str(input_path),
         "-ss", str(chapter.start),
+        "-i", str(input_path),
         "-t", str(chapter.duration),
     ]
 
