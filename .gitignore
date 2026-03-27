@@ -32,6 +32,9 @@ htmlcov/
 # Test container stamp file
 .container
 
+# Ignore local claude files
+.claude
+
 # OS
 .DS_Store
 Thumbs.db
