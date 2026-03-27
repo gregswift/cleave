@@ -1,0 +1,3 @@
+CONTAINER_REGISTRY=ghcr.io
+CONTAINER_ORG=gregswift
+CONTAINER_REPO=chapter-mp3s

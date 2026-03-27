@@ -172,7 +172,7 @@ update-dependencies: ## Run command to update dependencies in `pyproject.toml`
 	$(UV_COMMAND) sync --upgrade $(UV_OUTPUT)
 
 .PHONY: build
-build: build-python build-container ## Run all builds
+build: build-python #build-container ## Run all builds
 
 .PHONY: build-python
 build-python:  ## Build python artifacts
