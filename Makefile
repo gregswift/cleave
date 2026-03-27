@@ -140,8 +140,8 @@ test: test-unit test-integration test-coverage ## Standard entry point for runni
 	#echo "Running tests"
 
 .PHONY: test-coverage
-test-coverage: ## Looks at overall coverage
-	$(UV_COMMAND) run coverage $(COVERAGE_OUTPUT)
+test-coverage: .container $(TEST_ARTIFACTS_DIR) ## Run all tests with coverage report
+	$(BASE_COMMAND) cleave-test uv run pytest tests/ --cov=cleave --cov-report=term-missing $(COVERAGE_OUTPUT)
 
 .PHONY: test-unit
 test-unit: $(TEST_ARTIFACTS_DIR) ## Run unit tests (no infrastructure required)
