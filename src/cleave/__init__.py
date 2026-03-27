@@ -2,7 +2,13 @@
 
 __version__ = "0.1.0"
 
-from .chapters import DEFAULT_TEMPLATE, Chapter, extract_chapters, format_stem, sanitize_for_filename
+from .chapters import (
+    DEFAULT_TEMPLATE,
+    Chapter,
+    extract_chapters,
+    format_stem,
+    sanitize_for_filename,
+)
 from .converter import convert_file
 
 __all__ = [

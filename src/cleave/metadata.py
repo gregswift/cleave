@@ -83,10 +83,10 @@ def write_aac_tags(
     if audio.tags is None:
         audio.add_tags()
 
-    audio.tags["\xa9nam"] = [chapter.title]       # Title
+    audio.tags["\xa9nam"] = [chapter.title]  # Title
     audio.tags["trkn"] = [(chapter.index, track_total)]
-    audio.tags["\xa9alb"] = [book_title]           # Album
-    audio.tags["\xa9ART"] = [author]               # Artist
+    audio.tags["\xa9alb"] = [book_title]  # Album
+    audio.tags["\xa9ART"] = [author]  # Artist
     audio.save()
 
 

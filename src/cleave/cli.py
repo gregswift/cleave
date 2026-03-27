@@ -150,6 +150,7 @@ def main(
             continue
 
         if verbose:
+
             def on_verbose_done(_chapter: Chapter, path: Path) -> None:
                 console.print(f"  [green]✓[/green] {path.name}")
 

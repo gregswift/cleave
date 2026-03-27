@@ -120,14 +120,17 @@ def convert_file(
         work.append((chapter, output_path))
 
     if work:
-
         max_workers = min(len(work), os.cpu_count() or 4)
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = {
                 pool.submit(
                     _convert_chapter,
-                    input_path, chapter, output_path,
-                    fmt=fmt, quality=quality, overwrite=overwrite,
+                    input_path,
+                    chapter,
+                    output_path,
+                    fmt=fmt,
+                    quality=quality,
+                    overwrite=overwrite,
                     book_title=book_title,
                     author=book_tags["author"],
                     track_total=track_total,
@@ -162,8 +165,12 @@ def _convert_chapter(
 ) -> None:
     """Extract and tag a single chapter. Designed to run in a thread pool."""
     cmd = _build_ffmpeg_cmd(
-        input_path, chapter, output_path,
-        fmt=fmt, quality=quality, overwrite=overwrite,
+        input_path,
+        chapter,
+        output_path,
+        fmt=fmt,
+        quality=quality,
+        overwrite=overwrite,
     )
     complete = False
     try:
@@ -171,13 +178,19 @@ def _convert_chapter(
 
         if fmt == "mp3":
             write_tags(
-                output_path, chapter,
-                book_title=book_title, author=author, track_total=track_total,
+                output_path,
+                chapter,
+                book_title=book_title,
+                author=author,
+                track_total=track_total,
             )
         else:
             write_aac_tags(
-                output_path, chapter,
-                book_title=book_title, author=author, track_total=track_total,
+                output_path,
+                chapter,
+                book_title=book_title,
+                author=author,
+                track_total=track_total,
             )
         complete = True
     finally:
@@ -215,9 +228,12 @@ def _build_ffmpeg_cmd(
         cmd.append("-y")
 
     cmd += [
-        "-ss", str(chapter.start),
-        "-i", str(input_path),
-        "-t", str(chapter.duration),
+        "-ss",
+        str(chapter.start),
+        "-i",
+        str(input_path),
+        "-t",
+        str(chapter.duration),
     ]
 
     if fmt == "mp3":
@@ -254,7 +270,10 @@ def _run_ffmpeg(cmd: list[str]) -> None:
     """
     try:
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL,
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -281,8 +300,11 @@ def _get_duration(path: Path) -> float:
     """Return the total duration of an audio file in seconds via ffprobe."""
     result = subprocess.run(
         [
-            "ffprobe", "-v", "quiet",
-            "-print_format", "json",
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
             "-show_format",
             str(path),
         ],

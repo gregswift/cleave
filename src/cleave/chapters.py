@@ -38,7 +38,11 @@ def sanitize_for_filename(value: str, delimiter: str = "_") -> str:
 
 
 def format_stem(
-    template: str, *, book_title: str, chapter: Chapter, delimiter: str = "_",
+    template: str,
+    *,
+    book_title: str,
+    chapter: Chapter,
+    delimiter: str = "_",
 ) -> str:
     """Format a filename template with chapter and book metadata.
 
@@ -144,13 +148,17 @@ def _run_ffprobe(path: Path) -> str:
     """
     cmd = [
         "ffprobe",
-        "-v", "quiet",
-        "-print_format", "json",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
         "-show_chapters",
         str(path),
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, check=False)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, check=False
+        )
     except FileNotFoundError:
         raise FileNotFoundError(
             "ffprobe not found. Please install ffmpeg: https://ffmpeg.org/download.html"
@@ -181,9 +189,7 @@ def _parse_ffprobe_json(json_text: str) -> list[Chapter]:
         raise ValueError(f"ffprobe returned invalid JSON: {exc}") from exc
 
     if "chapters" not in data:
-        raise ValueError(
-            f"ffprobe JSON missing 'chapters' key. Got keys: {list(data.keys())}"
-        )
+        raise ValueError(f"ffprobe JSON missing 'chapters' key. Got keys: {list(data.keys())}")
 
     chapters: list[Chapter] = []
     for i, raw in enumerate(data["chapters"], start=1):
