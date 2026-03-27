@@ -9,7 +9,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .chapters import Chapter, extract_chapters
+from .chapters import DEFAULT_TEMPLATE, Chapter, extract_chapters, format_stem
 from .metadata import read_book_tags, write_aac_tags, write_tags
 
 #: Supported output formats.
@@ -28,6 +28,8 @@ def convert_file(
     *,
     fmt: str = "mp3",
     quality: int = 2,
+    template: str = DEFAULT_TEMPLATE,
+    delimiter: str = "_",
     dry_run: bool = False,
     overwrite: bool = False,
     on_chapter_done: Callable[[Chapter, Path], None] | None = None,
@@ -54,6 +56,11 @@ def convert_file(
         fmt:        Output format — ``"mp3"`` (default) or ``"aac"``.
         quality:    MP3 VBR quality level 0–9 (ignored for ``"aac"`` format).
                     Lower values produce larger, higher-quality files.
+        template:   Python format string for output filenames.  Placeholders:
+                    ``{book}``, ``{title}``, ``{index}`` (supports format
+                    specs like ``{index:03d}``).
+        delimiter:  Character that replaces spaces and unsafe characters in
+                    the sanitized ``{book}`` and ``{title}`` values.
         dry_run:    If ``True``, log what would be done but do not write any
                     files or call ffmpeg.
         overwrite:  If ``True``, overwrite existing output files.  If
@@ -86,12 +93,12 @@ def convert_file(
     resolved_output_dir.mkdir(parents=True, exist_ok=True)
 
     chapters = extract_chapters(input_path)
-    book_tags: dict[str, str] | None = None
+    book_tags = read_book_tags(input_path)
+    book_title = book_tags["title"] or input_path.stem
+
     if not chapters:
-        book_tags = read_book_tags(input_path)
-        title = book_tags["title"] or input_path.stem
         duration = _get_duration(input_path)
-        chapters = [Chapter(index=1, title=title, start=0.0, end=duration)]
+        chapters = [Chapter(index=1, title=book_title, start=0.0, end=duration)]
 
     ext = EXTENSIONS[fmt]
     track_total = len(chapters)
@@ -101,7 +108,8 @@ def convert_file(
     work: list[tuple[Chapter, Path]] = []
     outputs: list[Path] = []
     for chapter in chapters:
-        output_path = resolved_output_dir / f"{chapter.output_stem()}{ext}"
+        stem = format_stem(template, book_title=book_title, chapter=chapter, delimiter=delimiter)
+        output_path = resolved_output_dir / f"{stem}{ext}"
         outputs.append(output_path)
 
         if output_path.exists() and not overwrite:
@@ -111,8 +119,6 @@ def convert_file(
         work.append((chapter, output_path))
 
     if work:
-        if book_tags is None:
-            book_tags = read_book_tags(input_path)
 
         max_workers = min(len(work), os.cpu_count() or 4)
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
@@ -121,7 +127,7 @@ def convert_file(
                     _convert_chapter,
                     input_path, chapter, output_path,
                     fmt=fmt, quality=quality, overwrite=overwrite,
-                    book_title=book_tags["title"],
+                    book_title=book_title,
                     author=book_tags["author"],
                     track_total=track_total,
                     on_done=on_chapter_done,

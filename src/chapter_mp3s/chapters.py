@@ -9,6 +9,60 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+#: Default filename template for output files.
+DEFAULT_TEMPLATE = "{book}-Chapter_{index:03d}"
+
+
+def sanitize_for_filename(value: str, delimiter: str = "_") -> str:
+    """Make a string safe for use in filenames.
+
+    Colons are converted to hyphens (they often act as semantic separators in
+    titles).  Other filesystem-unsafe characters and whitespace are replaced
+    with *delimiter*.  Consecutive delimiters are collapsed and
+    leading/trailing delimiters, dots, and spaces are stripped.
+
+    Args:
+        value:     The raw string to sanitize.
+        delimiter: Character used to replace spaces and unsafe characters.
+    """
+    # Colons → hyphen (semantic separator, not junk); consume trailing space
+    sanitized = re.sub(r":\s*", "-", value)
+    # Replace remaining unsafe chars with the delimiter
+    sanitized = re.sub(r'[<>"/\\|?*\x00-\x1f]', delimiter, sanitized)
+    sanitized = sanitized.replace(" ", delimiter)
+    # Collapse runs of the delimiter
+    if delimiter:
+        sanitized = re.sub(re.escape(delimiter) + r"+", delimiter, sanitized)
+    sanitized = sanitized.strip(f"{delimiter}. ")
+    return sanitized
+
+
+def format_stem(
+    template: str, *, book_title: str, chapter: Chapter, delimiter: str = "_",
+) -> str:
+    """Format a filename template with chapter and book metadata.
+
+    Supported placeholders:
+        ``{book}``   — sanitized book title
+        ``{title}``  — sanitized chapter title
+        ``{index}``  — 1-based chapter number (supports format specs, e.g. ``{index:03d}``)
+
+    Args:
+        template:    A Python format string.
+        book_title:  The book's title tag (sanitized automatically).
+        chapter:     The chapter to format for.
+        delimiter:   Passed through to :func:`sanitize_for_filename`.
+
+    Returns:
+        The formatted filename stem (no extension).
+    """
+    return template.format(
+        book=sanitize_for_filename(book_title, delimiter),
+        title=sanitize_for_filename(chapter.title, delimiter),
+        index=chapter.index,
+    )
+
+
 @dataclass(frozen=True)
 class Chapter:
     """A single chapter extracted from an audiobook file.

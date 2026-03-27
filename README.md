@@ -87,6 +87,35 @@ chapter-mp3s --quality 0 book.m4b   # best quality
 chapter-mp3s --quality 5 book.m4b   # smaller files
 ```
 
+### Filename template
+
+Output filenames are controlled by `--template`. The default produces names
+like `The_Hobbit-Chapter_001.mp3`. Available placeholders:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{book}`    | Sanitized book title from file metadata |
+| `{title}`   | Sanitized chapter title |
+| `{index}`   | Chapter number (supports format specs, e.g. `{index:03d}`) |
+
+Spaces and unsafe filesystem characters inside `{book}` and `{title}` are
+replaced with the `--delimiter` character (default `_`). Colons are always
+converted to hyphens.
+
+```sh
+# Default template
+chapter-mp3s book.m4b
+# → The_Hobbit-Chapter_001.mp3, The_Hobbit-Chapter_002.mp3, ...
+
+# Classic "01 - Title" style with spaces
+chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
+# → 01 - An Unexpected Party.mp3, 02 - Roast Mutton.mp3, ...
+
+# Book and title with hyphens
+chapter-mp3s --template '{book}-{index:02d}-{title}' --delimiter '-' book.m4b
+# → The-Hobbit-01-An-Unexpected-Party.mp3, ...
+```
+
 ### Other options
 
 ```sh
@@ -105,12 +134,13 @@ Usage: chapter-mp3s [OPTIONS] INPUT...
   Split m4b audiobook files into per-chapter audio files.
 
   Reads chapter markers from each INPUT file and writes one output file per
-  chapter, named "01 - Chapter Title.mp3" (or .m4a for --format aac).
+  chapter. The output filename is controlled by --template.
 
   Examples:
     chapter-mp3s book.m4b
     chapter-mp3s --format aac --output-dir ./out book.m4b
     chapter-mp3s --quality 0 --overwrite *.m4b
+    chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
 
 Options:
   -o, --output-dir DIR    Directory for output files. Defaults to the same
@@ -121,6 +151,12 @@ Options:
   --quality 0-9           MP3 VBR quality level. 0 = best quality / largest
                           file, 9 = smallest. Ignored for --format aac.
                           [default: 2]
+  --template TEXT         Filename template. Placeholders: {book}, {title},
+                          {index} (supports format specs, e.g. {index:03d}).
+                          [default: {book}-Chapter_{index:03d}]
+  --delimiter TEXT        Character used within {book} and {title} values to
+                          replace spaces and unsafe characters. Colons are
+                          always converted to hyphens.  [default: _]
   --dry-run               Show what would be done without writing any files.
   --overwrite             Overwrite existing output files. By default existing
                           files are skipped.

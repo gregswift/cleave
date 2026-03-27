@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 
 from . import __version__
-from .chapters import Chapter, extract_chapters
+from .chapters import DEFAULT_TEMPLATE, Chapter, extract_chapters
 from .converter import FORMATS, convert_file
 
 console = Console(stderr=True)
@@ -56,6 +56,26 @@ console = Console(stderr=True)
     ),
 )
 @click.option(
+    "--template",
+    default=DEFAULT_TEMPLATE,
+    show_default=True,
+    help=(
+        "Filename template. Placeholders: {book}, {title}, {index} "
+        "(supports format specs, e.g. {index:03d})."
+    ),
+)
+@click.option(
+    "--delimiter",
+    default="_",
+    show_default=True,
+    help=(
+        "Character used within {book} and {title} values to replace spaces "
+        "and unsafe characters. For example, a title 'Chapter One' becomes "
+        "'Chapter_One' with the default delimiter. "
+        "Colons are always converted to hyphens rather than the delimiter."
+    ),
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -72,19 +92,22 @@ def main(
     output_dir: Path | None,
     fmt: str,
     quality: int,
+    template: str,
+    delimiter: str,
     dry_run: bool,
     overwrite: bool,
 ) -> None:
     """Split m4b audiobook files into per-chapter audio files.
 
     Reads chapter markers from each INPUT file and writes one output file per
-    chapter, named "01 - Chapter Title.mp3" (or .m4a for --format aac).
+    chapter. The output filename is controlled by --template.
 
     \b
     Examples:
       chapter-mp3s book.m4b
       chapter-mp3s --format aac --output-dir ./out book.m4b
       chapter-mp3s --quality 0 --overwrite *.m4b
+      chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
     """
     had_error = False
 
@@ -99,6 +122,8 @@ def main(
                     output_dir=output_dir,
                     fmt=fmt,
                     quality=quality,
+                    template=template,
+                    delimiter=delimiter,
                     dry_run=True,
                 )
             except (FileNotFoundError, ValueError) as exc:
@@ -137,6 +162,8 @@ def main(
                     output_dir=output_dir,
                     fmt=fmt,
                     quality=quality,
+                    template=template,
+                    delimiter=delimiter,
                     overwrite=overwrite,
                     on_chapter_done=on_chapter_done,
                 )

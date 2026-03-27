@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from chapter_mp3s.chapters import Chapter, _parse_ffprobe_json, extract_chapters
+from chapter_mp3s.chapters import (
+    Chapter,
+    _parse_ffprobe_json,
+    extract_chapters,
+    format_stem,
+    sanitize_for_filename,
+)
 
 
 class TestChapterDataclass:
@@ -93,6 +99,58 @@ class TestParseFfprobeJson:
     def test_missing_chapters_key_raises_value_error(self) -> None:
         with pytest.raises(ValueError):
             _parse_ffprobe_json('{"streams": []}')
+
+
+class TestSanitizeForFilename:
+    def test_spaces_become_delimiter(self) -> None:
+        assert sanitize_for_filename("Chapter One") == "Chapter_One"
+
+    def test_custom_delimiter(self) -> None:
+        assert sanitize_for_filename("Chapter One", "-") == "Chapter-One"
+
+    def test_colons_become_hyphens(self) -> None:
+        assert sanitize_for_filename("Part 1: The Beginning") == "Part_1-The_Beginning"
+
+    def test_colons_become_hyphens_regardless_of_delimiter(self) -> None:
+        assert sanitize_for_filename("Part 1: The Beginning", " ") == "Part 1-The Beginning"
+
+    def test_colon_without_space(self) -> None:
+        assert sanitize_for_filename("Part 1:The Beginning") == "Part_1-The_Beginning"
+
+    def test_unsafe_chars_replaced(self) -> None:
+        assert sanitize_for_filename('Bad<>"/\\|?*Name') == "Bad_Name"
+
+    def test_consecutive_delimiters_collapsed(self) -> None:
+        assert sanitize_for_filename("too   many   spaces") == "too_many_spaces"
+
+    def test_leading_trailing_stripped(self) -> None:
+        assert sanitize_for_filename("  padded  ") == "padded"
+
+    def test_dots_stripped(self) -> None:
+        assert sanitize_for_filename("...hidden") == "hidden"
+
+
+class TestFormatStem:
+    def test_default_template(self) -> None:
+        ch = Chapter(index=3, title="The Beginning", start=0.0, end=5.0)
+        result = format_stem("{book}-Chapter_{index:03d}", book_title="My Book", chapter=ch)
+        assert result == "My_Book-Chapter_003"
+
+    def test_title_placeholder(self) -> None:
+        ch = Chapter(index=1, title="An Unexpected Party", start=0.0, end=5.0)
+        result = format_stem("{index:02d}-{title}", book_title="The Hobbit", chapter=ch)
+        assert result == "01-An_Unexpected_Party"
+
+    def test_custom_delimiter(self) -> None:
+        ch = Chapter(index=1, title="Chapter One", start=0.0, end=5.0)
+        result = format_stem("{book}-{title}", book_title="My Book", chapter=ch, delimiter="-")
+        assert result == "My-Book-Chapter-One"
+
+    def test_index_formatting(self) -> None:
+        ch = Chapter(index=7, title="Test", start=0.0, end=5.0)
+        assert format_stem("{index}", book_title="X", chapter=ch) == "7"
+        assert format_stem("{index:02d}", book_title="X", chapter=ch) == "07"
+        assert format_stem("{index:04d}", book_title="X", chapter=ch) == "0007"
 
 
 class TestExtractChapters:
