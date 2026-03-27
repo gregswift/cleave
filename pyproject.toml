@@ -23,19 +23,10 @@ dependencies = [
     "click>=8.1",
     "mutagen>=1.47",
     "rich>=13.0",
-    "ruff>=0.15.8",
 ]
 
 [project.scripts]
 chapter-mp3s = "chapter_mp3s.cli:main"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-cov>=5.0",
-    "ruff>=0.9",
-    "mypy>=1.10",
-]
 
 [tool.hatch.version]
 path = "src/chapter_mp3s/__init__.py"
@@ -63,4 +54,6 @@ files = ["src"]
 dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
+    "ruff>=0.9",
+    "mypy>=1.10",
 ]
