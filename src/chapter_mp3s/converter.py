@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from .chapters import Chapter, extract_chapters
@@ -88,8 +90,12 @@ def convert_file(
         book_tags = read_book_tags(input_path)
 
     ext = EXTENSIONS[fmt]
-    outputs: list[Path] = []
+    track_total = len(chapters)
 
+    # Build the full output list up-front (deterministic order) and identify
+    # which chapters actually need conversion.
+    work: list[tuple[Chapter, Path]] = []
+    outputs: list[Path] = []
     for chapter in chapters:
         output_path = resolved_output_dir / f"{chapter.output_stem()}{ext}"
         outputs.append(output_path)
@@ -98,29 +104,57 @@ def convert_file(
             continue
         if dry_run:
             continue
+        work.append((chapter, output_path))
 
-        cmd = _build_ffmpeg_cmd(
-            input_path, chapter, output_path,
-            fmt=fmt, quality=quality, overwrite=overwrite,
-        )
-        _run_ffmpeg(cmd)
-
-        if fmt == "mp3":
-            write_tags(
-                output_path, chapter,
-                book_title=book_tags["title"],
-                author=book_tags["author"],
-                track_total=len(chapters),
-            )
-        else:
-            write_aac_tags(
-                output_path, chapter,
-                book_title=book_tags["title"],
-                author=book_tags["author"],
-                track_total=len(chapters),
-            )
+    if work:
+        max_workers = min(len(work), os.cpu_count() or 4)
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(
+                    _convert_chapter,
+                    input_path, chapter, output_path,
+                    fmt=fmt, quality=quality, overwrite=overwrite,
+                    book_title=book_tags["title"],
+                    author=book_tags["author"],
+                    track_total=track_total,
+                ): chapter
+                for chapter, output_path in work
+            }
+            for future in as_completed(futures):
+                future.result()  # raises on first error
 
     return outputs
+
+
+def _convert_chapter(
+    input_path: Path,
+    chapter: Chapter,
+    output_path: Path,
+    *,
+    fmt: str,
+    quality: int,
+    overwrite: bool,
+    book_title: str,
+    author: str,
+    track_total: int,
+) -> None:
+    """Extract and tag a single chapter. Designed to run in a thread pool."""
+    cmd = _build_ffmpeg_cmd(
+        input_path, chapter, output_path,
+        fmt=fmt, quality=quality, overwrite=overwrite,
+    )
+    _run_ffmpeg(cmd)
+
+    if fmt == "mp3":
+        write_tags(
+            output_path, chapter,
+            book_title=book_title, author=author, track_total=track_total,
+        )
+    else:
+        write_aac_tags(
+            output_path, chapter,
+            book_title=book_title, author=author, track_total=track_total,
+        )
 
 
 def _build_ffmpeg_cmd(
