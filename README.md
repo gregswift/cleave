@@ -157,6 +157,8 @@ Options:
   --delimiter TEXT        Character used within {book} and {title} values to
                           replace spaces and unsafe characters. Colons are
                           always converted to hyphens.  [default: _]
+  -v, --verbose           Print each chapter filename as it completes instead
+                          of showing a progress bar.
   --dry-run               Show what would be done without writing any files.
   --overwrite             Overwrite existing output files. By default existing
                           files are skipped.

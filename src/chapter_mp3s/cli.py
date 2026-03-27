@@ -13,7 +13,12 @@ from . import __version__
 from .chapters import DEFAULT_TEMPLATE, Chapter, extract_chapters
 from .converter import FORMATS, convert_file
 
-console = Console(stderr=True)
+console = Console()
+err_console = Console(stderr=True)
+
+
+def _print_error(exc: Exception) -> None:
+    err_console.print(f"  [red]error:[/red] {exc}")
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -76,6 +81,13 @@ console = Console(stderr=True)
     ),
 )
 @click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Print each chapter filename as it completes instead of showing a progress bar.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -94,6 +106,7 @@ def main(
     quality: int,
     template: str,
     delimiter: str,
+    verbose: bool,
     dry_run: bool,
     overwrite: bool,
 ) -> None:
@@ -127,7 +140,7 @@ def main(
                     dry_run=True,
                 )
             except (FileNotFoundError, ValueError) as exc:
-                console.print(f"  [red]error:[/red] {exc}")
+                _print_error(exc)
                 had_error = True
                 continue
 
@@ -135,11 +148,31 @@ def main(
                 console.print(f"  [dim]~[/dim] {path.name}")
             continue
 
+        if verbose:
+            def on_verbose_done(_chapter: Chapter, path: Path) -> None:
+                console.print(f"  [green]✓[/green] {path.name}")
+
+            try:
+                convert_file(
+                    input_path,
+                    output_dir=output_dir,
+                    fmt=fmt,
+                    quality=quality,
+                    template=template,
+                    delimiter=delimiter,
+                    overwrite=overwrite,
+                    on_chapter_done=on_verbose_done,
+                )
+            except (FileNotFoundError, ValueError) as exc:
+                _print_error(exc)
+                had_error = True
+            continue
+
         # Determine chapter count for the progress bar.
         try:
             chapters = extract_chapters(input_path)
         except (FileNotFoundError, ValueError) as exc:
-            console.print(f"  [red]error:[/red] {exc}")
+            err_console.print(f"  [red]error:[/red] {exc}")
             had_error = True
             continue
 
@@ -149,7 +182,7 @@ def main(
             TextColumn("  "),
             BarColumn(),
             MofNCompleteColumn(),
-            console=console,
+            console=err_console,
         ) as progress:
             task = progress.add_task("Converting", total=total)
 
@@ -168,7 +201,7 @@ def main(
                     on_chapter_done=on_chapter_done,
                 )
             except (FileNotFoundError, ValueError) as exc:
-                console.print(f"  [red]error:[/red] {exc}")
+                _print_error(exc)
                 had_error = True
                 continue
 
