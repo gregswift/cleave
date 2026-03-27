@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 env:
-  CI_MAKE_OVERRIDES: .github/.ci.include.mk
+  CI_MAKE_OVERRIDES: .github/ci.include.mk
 
 jobs:
   lint:

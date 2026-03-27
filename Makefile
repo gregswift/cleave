@@ -137,7 +137,6 @@ lint-py: $(TEST_ARTIFACTS_DIR) ## Entrypoint for running node linter
 
 .PHONY: test
 test: test-unit test-integration test-coverage ## Standard entry point for running all tests.
-	#echo "Running tests"
 
 .PHONY: test-coverage
 test-coverage: .container $(TEST_ARTIFACTS_DIR) ## Run all tests with coverage report
