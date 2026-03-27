@@ -3,7 +3,7 @@
   "release-type": "python",
   "packages": {
     ".": {
-      "version-file": "src/chapter_mp3s/__init__.py"
+      "version-file": "src/cleave/__init__.py"
     }
   }
 }

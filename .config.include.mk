@@ -1,3 +1,4 @@
 CONTAINER_REGISTRY=ghcr.io
 CONTAINER_ORG=gregswift
-CONTAINER_REPO=chapter-mp3s
+CONTAINER_REPO=cleave
+CLEAN_PATHS=.ruff_cache .pytest_cache .venv .container

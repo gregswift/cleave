@@ -1,4 +1,4 @@
-"""chapter-mp3s: Split m4b audiobooks into per-chapter audio files."""
+"""cleave: Split m4b audiobooks into per-chapter audio files."""
 
 __version__ = "0.1.0"
 

@@ -1,9 +1,9 @@
-# chapter-mp3s
+# cleave
 
 Split m4b audiobook files into per-chapter audio files.
 
 ```
-$ chapter-mp3s "The Hobbit.m4b"
+$ cleave "The Hobbit.m4b"
 
 The Hobbit.m4b
   ✓ 01 - An Unexpected Party.mp3
@@ -22,7 +22,7 @@ The Hobbit.m4b
 ### pip
 
 ```sh
-pip install chapter-mp3s
+pip install cleave
 ```
 
 ### Container
@@ -30,7 +30,7 @@ pip install chapter-mp3s
 No Python or ffmpeg installation needed — everything is bundled:
 
 ```sh
-docker run --rm -v "$PWD":/data ghcr.io/gregswift/chapter-mp3s /data/book.m4b
+docker run --rm -v "$PWD":/data ghcr.io/gregswift/cleave /data/book.m4b
 ```
 
 To write output to a specific directory on the host:
@@ -39,7 +39,7 @@ To write output to a specific directory on the host:
 docker run --rm \
   -v "$PWD":/data \
   -v "$HOME/Audiobooks":/out \
-  ghcr.io/gregswift/chapter-mp3s -o /out /data/book.m4b
+  ghcr.io/gregswift/cleave -o /out /data/book.m4b
 ```
 
 ## Usage
@@ -48,13 +48,13 @@ docker run --rm \
 
 ```sh
 # Convert a single book (outputs mp3 files next to the input)
-chapter-mp3s book.m4b
+cleave book.m4b
 
 # Convert multiple books at once
-chapter-mp3s book1.m4b book2.m4b
+cleave book1.m4b book2.m4b
 
 # Write output to a specific directory
-chapter-mp3s -o ~/Audiobooks/output book.m4b
+cleave -o ~/Audiobooks/output book.m4b
 ```
 
 ### Format options
@@ -65,10 +65,10 @@ chapters losslessly with no re-encoding:
 
 ```sh
 # MP3 (default) — transcodes, universally compatible
-chapter-mp3s book.m4b
+cleave book.m4b
 
 # AAC — lossless remux, outputs .m4a files
-chapter-mp3s --format aac book.m4b
+cleave --format aac book.m4b
 ```
 
 ### MP3 quality
@@ -83,8 +83,8 @@ Quality is controlled with LAME VBR presets. Lower numbers are higher quality:
 | 9           | ~65 kbps        | Smallest files |
 
 ```sh
-chapter-mp3s --quality 0 book.m4b   # best quality
-chapter-mp3s --quality 5 book.m4b   # smaller files
+cleave --quality 0 book.m4b   # best quality
+cleave --quality 5 book.m4b   # smaller files
 ```
 
 ### Filename template
@@ -104,15 +104,15 @@ converted to hyphens.
 
 ```sh
 # Default template
-chapter-mp3s book.m4b
+cleave book.m4b
 # → The_Hobbit-Chapter_001.mp3, The_Hobbit-Chapter_002.mp3, ...
 
 # Classic "01 - Title" style with spaces
-chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
+cleave --template '{index:02d} - {title}' --delimiter ' ' book.m4b
 # → 01 - An Unexpected Party.mp3, 02 - Roast Mutton.mp3, ...
 
 # Book and title with hyphens
-chapter-mp3s --template '{book}-{index:02d}-{title}' --delimiter '-' book.m4b
+cleave --template '{book}-{index:02d}-{title}' --delimiter '-' book.m4b
 # → The-Hobbit-01-An-Unexpected-Party.mp3, ...
 ```
 
@@ -120,16 +120,16 @@ chapter-mp3s --template '{book}-{index:02d}-{title}' --delimiter '-' book.m4b
 
 ```sh
 # Preview what would be written without doing anything
-chapter-mp3s --dry-run book.m4b
+cleave --dry-run book.m4b
 
 # Overwrite files that already exist
-chapter-mp3s --overwrite book.m4b
+cleave --overwrite book.m4b
 ```
 
 ## CLI reference
 
 ```
-Usage: chapter-mp3s [OPTIONS] INPUT...
+Usage: cleave [OPTIONS] INPUT...
 
   Split m4b audiobook files into per-chapter audio files.
 
@@ -137,10 +137,10 @@ Usage: chapter-mp3s [OPTIONS] INPUT...
   chapter. The output filename is controlled by --template.
 
   Examples:
-    chapter-mp3s book.m4b
-    chapter-mp3s --format aac --output-dir ./out book.m4b
-    chapter-mp3s --quality 0 --overwrite *.m4b
-    chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
+    cleave book.m4b
+    cleave --format aac --output-dir ./out book.m4b
+    cleave --quality 0 --overwrite *.m4b
+    cleave --template '{index:02d} - {title}' --delimiter ' ' book.m4b
 
 Options:
   -o, --output-dir DIR    Directory for output files. Defaults to the same
@@ -171,7 +171,7 @@ Options:
 The library can also be used directly from Python:
 
 ```python
-from chapter_mp3s import convert_file, extract_chapters
+from cleave import convert_file, extract_chapters
 
 # Inspect chapters without converting
 chapters = extract_chapters("book.m4b")

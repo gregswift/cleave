@@ -1,4 +1,4 @@
-"""Command-line interface for chapter-mp3s."""
+"""Command-line interface for cleave."""
 
 from __future__ import annotations
 
@@ -117,10 +117,10 @@ def main(
 
     \b
     Examples:
-      chapter-mp3s book.m4b
-      chapter-mp3s --format aac --output-dir ./out book.m4b
-      chapter-mp3s --quality 0 --overwrite *.m4b
-      chapter-mp3s --template '{index:02d} - {title}' --delimiter ' ' book.m4b
+      cleave book.m4b
+      cleave --format aac --output-dir ./out book.m4b
+      cleave --quality 0 --overwrite *.m4b
+      cleave --template '{index:02d} - {title}' --delimiter ' ' book.m4b
     """
     had_error = False
 
@@ -172,7 +172,7 @@ def main(
         try:
             chapters = extract_chapters(input_path)
         except (FileNotFoundError, ValueError) as exc:
-            err_console.print(f"  [red]error:[/red] {exc}")
+            _print_error(exc)
             had_error = True
             continue
 

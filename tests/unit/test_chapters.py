@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from chapter_mp3s.chapters import (
+from cleave.chapters import (
     Chapter,
     _parse_ffprobe_json,
     extract_chapters,

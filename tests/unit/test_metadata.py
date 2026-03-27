@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from chapter_mp3s.chapters import Chapter
-from chapter_mp3s.metadata import read_book_tags, write_aac_tags, write_tags
+from cleave.chapters import Chapter
+from cleave.metadata import read_book_tags, write_aac_tags, write_tags
 
 
 CHAPTER = Chapter(index=2, title="Chapter One", start=3.0, end=7.0)

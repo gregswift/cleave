@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from chapter_mp3s.converter import convert_file
+from cleave.converter import convert_file
 
 
 def test_produces_correct_number_of_files(synthetic_m4b: Path, tmp_path: Path) -> None:
