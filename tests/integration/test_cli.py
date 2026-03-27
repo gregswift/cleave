@@ -8,7 +8,6 @@ from click.testing import CliRunner
 
 from cleave.cli import main
 
-
 runner = CliRunner()
 
 
@@ -20,18 +19,14 @@ class TestDryRun:
         assert ".mp3" in result.output
 
     def test_dry_run_writes_nothing(self, synthetic_m4b: Path, tmp_path: Path) -> None:
-        result = runner.invoke(
-            main, ["--dry-run", "-o", str(tmp_path), str(synthetic_m4b)]
-        )
+        result = runner.invoke(main, ["--dry-run", "-o", str(tmp_path), str(synthetic_m4b)])
         assert result.exit_code == 0
         assert not list(tmp_path.glob("*.mp3"))
 
 
 class TestVerbose:
     def test_verbose_prints_filenames(self, synthetic_m4b: Path, tmp_path: Path) -> None:
-        result = runner.invoke(
-            main, ["-v", "-o", str(tmp_path), str(synthetic_m4b)]
-        )
+        result = runner.invoke(main, ["-v", "-o", str(tmp_path), str(synthetic_m4b)])
         assert result.exit_code == 0
         assert "✓" in result.output
 
@@ -90,8 +85,6 @@ class TestOverwrite:
 
     def test_overwrite_flag(self, synthetic_m4b: Path, tmp_path: Path) -> None:
         runner.invoke(main, ["-v", "-o", str(tmp_path), str(synthetic_m4b)])
-        result = runner.invoke(
-            main, ["-v", "--overwrite", "-o", str(tmp_path), str(synthetic_m4b)]
-        )
+        result = runner.invoke(main, ["-v", "--overwrite", "-o", str(tmp_path), str(synthetic_m4b)])
         assert result.exit_code == 0
         assert "✓" in result.output

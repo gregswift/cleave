@@ -7,7 +7,6 @@ from click.testing import CliRunner
 from cleave import __version__
 from cleave.cli import main
 
-
 runner = CliRunner()
 
 
