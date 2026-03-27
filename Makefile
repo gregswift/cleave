@@ -93,6 +93,7 @@ debug-%:              ## Debug a variable by calling `make debug-VARIABLE`
 .check-env:
 	echo "Checking environment for dependencies..."
 	if [ "$(shell which $(CONTAINER_ENGINE))" = "" ]; then echo 'ERROR: `$(CONTAINER_ENGINE)` must be installed and available.'; exit 10; else echo "Found container engine $$(which $(CONTAINER_ENGINE))"; fi
+	if [ "$(shell which pre-commit)" = "" ]; then echo 'ERROR: `pre-commit` must be installed and available.'; exit 10; else echo "Found pre-commit $$(which pre-commit)"; fi
 
 .PHONY: help
 .SILENT: help
@@ -114,7 +115,7 @@ $(TEST_ARTIFACTS_DIR):
 	mkdir -p $(@)
 
 .PHONY: init
-setup:  ## Used to initialize repository by loading dependencies
+setup:  .check-env ## Used to initialize repository by loading dependencies
 	$(UV_COMMAND) sync $(UV_OUTPUT)
 
 .PHONY: format

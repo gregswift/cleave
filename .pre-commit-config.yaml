@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: format-check
+        name: format check
+        entry: make format-check
+        language: system
+        pass_filenames: false
+      - id: lint-py
+        name: python lint
+        entry: make lint-py
+        language: system
+        pass_filenames: false
+      - id: lint-container
+        name: container lint
+        entry: make lint-container
+        language: system
+        pass_filenames: false
