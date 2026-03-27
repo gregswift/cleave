@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -134,8 +135,14 @@ def convert_file(
                 ): chapter
                 for chapter, output_path in work
             }
-            for future in as_completed(futures):
-                future.result()  # raises on first error
+            try:
+                for future in as_completed(futures):
+                    future.result()
+            except KeyboardInterrupt:
+                _kill_active_procs()
+                for future in futures:
+                    future.cancel()
+                raise
 
     return outputs
 
@@ -158,18 +165,24 @@ def _convert_chapter(
         input_path, chapter, output_path,
         fmt=fmt, quality=quality, overwrite=overwrite,
     )
-    _run_ffmpeg(cmd)
+    complete = False
+    try:
+        _run_ffmpeg(cmd)
 
-    if fmt == "mp3":
-        write_tags(
-            output_path, chapter,
-            book_title=book_title, author=author, track_total=track_total,
-        )
-    else:
-        write_aac_tags(
-            output_path, chapter,
-            book_title=book_title, author=author, track_total=track_total,
-        )
+        if fmt == "mp3":
+            write_tags(
+                output_path, chapter,
+                book_title=book_title, author=author, track_total=track_total,
+            )
+        else:
+            write_aac_tags(
+                output_path, chapter,
+                book_title=book_title, author=author, track_total=track_total,
+            )
+        complete = True
+    finally:
+        if not complete:
+            output_path.unlink(missing_ok=True)
 
     if on_done is not None:
         on_done(chapter, output_path)
@@ -216,6 +229,19 @@ def _build_ffmpeg_cmd(
     return cmd
 
 
+# Active ffmpeg subprocesses, tracked so they can be killed on interrupt.
+_active_procs: list[subprocess.Popen[bytes]] = []
+_active_procs_lock = threading.Lock()
+
+
+def _kill_active_procs() -> None:
+    """Terminate all tracked ffmpeg subprocesses."""
+    with _active_procs_lock:
+        for proc in _active_procs:
+            proc.terminate()
+        _active_procs.clear()
+
+
 def _run_ffmpeg(cmd: list[str]) -> None:
     """Execute an ffmpeg command, raising on failure.
 
@@ -227,16 +253,27 @@ def _run_ffmpeg(cmd: list[str]) -> None:
         ValueError:        If ffmpeg exits with a non-zero return code.
     """
     try:
-        result = subprocess.run(cmd, capture_output=True, stdin=subprocess.DEVNULL, check=False)
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(
             "ffmpeg not found. Please install ffmpeg: https://ffmpeg.org/download.html"
         ) from None
 
-    if result.returncode != 0:
+    with _active_procs_lock:
+        _active_procs.append(proc)
+    try:
+        _, stderr = proc.communicate()
+    finally:
+        with _active_procs_lock:
+            if proc in _active_procs:
+                _active_procs.remove(proc)
+
+    if proc.returncode != 0:
         raise ValueError(
-            f"ffmpeg exited with status {result.returncode}:\n"
-            f"{result.stderr.decode(errors='replace').strip()}"
+            f"ffmpeg exited with status {proc.returncode}:\n"
+            f"{stderr.decode(errors='replace').strip()}"
         )
 
 
