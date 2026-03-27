@@ -58,8 +58,7 @@ def synthetic_m4b(tmp_path_factory: pytest.TempPathFactory) -> Path:
     subprocess.run(
         [
             "ffmpeg", "-y",
-            "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
-            "-t", "10",
+            "-f", "lavfi", "-t", "10", "-i", "anullsrc=r=44100:cl=mono",
             "-i", str(metadata_file),
             "-map_metadata", "1",
             "-c:a", "aac",
@@ -68,6 +67,7 @@ def synthetic_m4b(tmp_path_factory: pytest.TempPathFactory) -> Path:
         ],
         check=True,
         capture_output=True,
+        stdin=subprocess.DEVNULL,
     )
 
     return m4b_path

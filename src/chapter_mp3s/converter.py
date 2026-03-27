@@ -175,7 +175,7 @@ def _run_ffmpeg(cmd: list[str]) -> None:
         ValueError:        If ffmpeg exits with a non-zero return code.
     """
     try:
-        result = subprocess.run(cmd, capture_output=True, check=False)
+        result = subprocess.run(cmd, capture_output=True, stdin=subprocess.DEVNULL, check=False)
     except FileNotFoundError:
         raise FileNotFoundError(
             "ffmpeg not found. Please install ffmpeg: https://ffmpeg.org/download.html"
@@ -199,6 +199,7 @@ def _get_duration(path: Path) -> float:
         ],
         capture_output=True,
         text=True,
+        stdin=subprocess.DEVNULL,
         check=False,
     )
     try:

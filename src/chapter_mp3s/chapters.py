@@ -96,7 +96,7 @@ def _run_ffprobe(path: Path) -> str:
         str(path),
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        result = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, check=False)
     except FileNotFoundError:
         raise FileNotFoundError(
             "ffprobe not found. Please install ffmpeg: https://ffmpeg.org/download.html"

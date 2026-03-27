@@ -147,9 +147,13 @@ test-coverage: ## Looks at overall coverage
 test-unit: $(TEST_ARTIFACTS_DIR) ## Run unit tests (no infrastructure required)
 	$(UV_COMMAND) run pytest tests/unit $(PYTEST_UNIT_OUTPUT)
 
+.container: Containerfile.test
+	$(CONTAINER_ENGINE) build -t chapter-mp3s-test -f Containerfile.test .
+	$(CONTAINER_ENGINE) inspect --format='{{.Id}}' chapter-mp3s-test > .container
+
 .PHONY: test-integration
-test-integration: $(TEST_ARTIFACTS_DIR) ## Run integration tests (requires make start)
-	$(UV_COMMAND) run pytest tests/integration $(PYTEST_INTEGRATION_OUTPUT)
+test-integration: .container $(TEST_ARTIFACTS_DIR) ## Run integration tests (requires ffmpeg via test container)
+	$(BASE_COMMAND) chapter-mp3s-test uv run pytest tests/integration $(PYTEST_INTEGRATION_OUTPUT)
 
 .PHONY: repl
 repl: ## To enter Python REPL interactively
