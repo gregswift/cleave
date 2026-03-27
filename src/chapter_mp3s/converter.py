@@ -81,13 +81,12 @@ def convert_file(
     resolved_output_dir.mkdir(parents=True, exist_ok=True)
 
     chapters = extract_chapters(input_path)
+    book_tags: dict[str, str] | None = None
     if not chapters:
         book_tags = read_book_tags(input_path)
         title = book_tags["title"] or input_path.stem
         duration = _get_duration(input_path)
         chapters = [Chapter(index=1, title=title, start=0.0, end=duration)]
-    else:
-        book_tags = read_book_tags(input_path)
 
     ext = EXTENSIONS[fmt]
     track_total = len(chapters)
@@ -107,6 +106,9 @@ def convert_file(
         work.append((chapter, output_path))
 
     if work:
+        if book_tags is None:
+            book_tags = read_book_tags(input_path)
+
         max_workers = min(len(work), os.cpu_count() or 4)
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = {
