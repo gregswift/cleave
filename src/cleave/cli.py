@@ -188,8 +188,8 @@ def main(
         ) as progress:
             task = progress.add_task("Converting", total=total)
 
-            def on_chapter_done(_chapter: Chapter, _path: Path) -> None:
-                progress.advance(task)
+            def on_chapter_done(_chapter: Chapter, _path: Path, _task: object = task) -> None:
+                progress.advance(_task)
 
             try:
                 outputs = convert_file(

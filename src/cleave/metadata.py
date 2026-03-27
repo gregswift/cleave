@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mutagen.id3 import ID3, ID3NoHeaderError, TALB, TPE1, TRCK, TIT2
+from mutagen.id3 import ID3, TALB, TIT2, TPE1, TRCK, ID3NoHeaderError
 from mutagen.mp4 import MP4
 
 from .chapters import Chapter

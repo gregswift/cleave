@@ -8,7 +8,6 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-
 #: Default filename template for output files.
 DEFAULT_TEMPLATE = "{book}-Chapter_{index:03d}"
 

@@ -6,7 +6,6 @@ import json
 
 import pytest
 
-
 SAMPLE_FFPROBE_JSON = json.dumps(
     {
         "chapters": [

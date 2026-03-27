@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from cleave.chapters import Chapter
 from cleave.metadata import read_book_tags, write_aac_tags, write_tags
-
 
 CHAPTER = Chapter(index=2, title="Chapter One", start=3.0, end=7.0)
 BOOK_TITLE = "My Great Audiobook"
@@ -15,7 +16,7 @@ TRACK_TOTAL = 5
 
 
 class TestWriteTags:
-    def test_missing_file_raises(self, tmp_path: "Path") -> None:
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
         missing = tmp_path / "ghost.mp3"
         with pytest.raises(FileNotFoundError):
             write_tags(
@@ -28,7 +29,7 @@ class TestWriteTags:
 
 
 class TestWriteAacTags:
-    def test_missing_file_raises(self, tmp_path: "Path") -> None:
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
         missing = tmp_path / "ghost.m4a"
         with pytest.raises(FileNotFoundError):
             write_aac_tags(
@@ -41,7 +42,7 @@ class TestWriteAacTags:
 
 
 class TestReadBookTags:
-    def test_missing_file_raises(self, tmp_path: "Path") -> None:
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
         missing = tmp_path / "ghost.m4b"
         with pytest.raises(FileNotFoundError):
             read_book_tags(missing)

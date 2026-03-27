@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
+from pathlib import Path
+
 import pytest
 
 from cleave.chapters import (
     Chapter,
     _parse_ffprobe_json,
-    extract_chapters,
     format_stem,
     sanitize_for_filename,
 )
@@ -20,7 +22,7 @@ class TestChapterDataclass:
 
     def test_frozen(self) -> None:
         ch = Chapter(index=1, title="Intro", start=0.0, end=5.0)
-        with pytest.raises(Exception):  # dataclasses.FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):
             ch.index = 2  # type: ignore[misc]
 
     def test_output_stem_zero_pads_index(self) -> None:
@@ -154,6 +156,6 @@ class TestFormatStem:
 
 
 class TestExtractChapters:
-    def test_missing_ffprobe_raises_file_not_found(self, tmp_path: "Path") -> None:
+    def test_missing_ffprobe_raises_file_not_found(self, tmp_path: Path) -> None:
         """extract_chapters should raise FileNotFoundError if ffprobe is absent."""
         pass  # placeholder — implemented alongside extract_chapters

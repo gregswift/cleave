@@ -9,7 +9,6 @@ import pytest
 from cleave.chapters import Chapter
 from cleave.converter import _build_ffmpeg_cmd, convert_file
 
-
 CHAPTER = Chapter(index=1, title="Introduction", start=0.0, end=3.0)
 
 

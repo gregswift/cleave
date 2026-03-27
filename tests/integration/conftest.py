@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 # NOTE: We intentionally let integration tests fail hard (not skip) when
 # ffmpeg is absent. These tests must run in the test container
 # (Containerfile.test) which provides ffmpeg. A missing ffmpeg means the
