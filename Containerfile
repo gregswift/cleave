@@ -5,11 +5,8 @@ COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 RUN uv build --wheel
 
-FROM python:3.14-slim
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.14-alpine
+RUN apk add --no-cache ffmpeg
 COPY --from=builder /build/dist/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl && rm /tmp/*.whl
 
