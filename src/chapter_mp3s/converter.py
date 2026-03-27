@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -29,6 +30,7 @@ def convert_file(
     quality: int = 2,
     dry_run: bool = False,
     overwrite: bool = False,
+    on_chapter_done: Callable[[Chapter, Path], None] | None = None,
 ) -> list[Path]:
     """Convert an m4b audiobook file into per-chapter audio files.
 
@@ -57,6 +59,9 @@ def convert_file(
         overwrite:  If ``True``, overwrite existing output files.  If
                     ``False`` (default), skip chapters that already have an
                     output file.
+        on_chapter_done: Optional callback invoked after each chapter is
+                    converted, called with ``(chapter, output_path)``.
+                    Called from worker threads — must be thread-safe.
 
     Returns:
         List of :class:`pathlib.Path` objects for every output file written
@@ -119,6 +124,7 @@ def convert_file(
                     book_title=book_tags["title"],
                     author=book_tags["author"],
                     track_total=track_total,
+                    on_done=on_chapter_done,
                 ): chapter
                 for chapter, output_path in work
             }
@@ -139,6 +145,7 @@ def _convert_chapter(
     book_title: str,
     author: str,
     track_total: int,
+    on_done: Callable[[Chapter, Path], None] | None = None,
 ) -> None:
     """Extract and tag a single chapter. Designed to run in a thread pool."""
     cmd = _build_ffmpeg_cmd(
@@ -157,6 +164,9 @@ def _convert_chapter(
             output_path, chapter,
             book_title=book_title, author=author, track_total=track_total,
         )
+
+    if on_done is not None:
+        on_done(chapter, output_path)
 
 
 def _build_ffmpeg_cmd(

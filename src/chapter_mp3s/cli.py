@@ -7,8 +7,10 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 
 from . import __version__
+from .chapters import Chapter, extract_chapters
 from .converter import FORMATS, convert_file
 
 console = Console(stderr=True)
@@ -90,30 +92,61 @@ def main(
         dry_label = " [dim](dry run)[/dim]" if dry_run else ""
         console.print(f"\n[bold]{input_path.name}[/bold]{dry_label}")
 
-        try:
-            with console.status("Converting...", spinner="dots"):
+        if dry_run:
+            try:
                 outputs = convert_file(
                     input_path,
                     output_dir=output_dir,
                     fmt=fmt,
                     quality=quality,
-                    dry_run=dry_run,
-                    overwrite=overwrite,
+                    dry_run=True,
                 )
-        except FileNotFoundError as exc:
-            console.print(f"  [red]error:[/red] {exc}")
-            had_error = True
+            except (FileNotFoundError, ValueError) as exc:
+                console.print(f"  [red]error:[/red] {exc}")
+                had_error = True
+                continue
+
+            for path in outputs:
+                console.print(f"  [dim]~[/dim] {path.name}")
             continue
-        except ValueError as exc:
+
+        # Determine chapter count for the progress bar.
+        try:
+            chapters = extract_chapters(input_path)
+        except (FileNotFoundError, ValueError) as exc:
             console.print(f"  [red]error:[/red] {exc}")
             had_error = True
             continue
 
+        total = len(chapters) if chapters else 1
+
+        with Progress(
+            TextColumn("  "),
+            BarColumn(),
+            MofNCompleteColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Converting", total=total)
+
+            def on_chapter_done(_chapter: Chapter, _path: Path) -> None:
+                progress.advance(task)
+
+            try:
+                outputs = convert_file(
+                    input_path,
+                    output_dir=output_dir,
+                    fmt=fmt,
+                    quality=quality,
+                    overwrite=overwrite,
+                    on_chapter_done=on_chapter_done,
+                )
+            except (FileNotFoundError, ValueError) as exc:
+                console.print(f"  [red]error:[/red] {exc}")
+                had_error = True
+                continue
+
         for path in outputs:
-            if dry_run:
-                console.print(f"  [dim]~[/dim] {path.name}")
-            else:
-                console.print(f"  [green]✓[/green] {path.name}")
+            console.print(f"  [green]✓[/green] {path.name}")
 
     if had_error:
         sys.exit(1)

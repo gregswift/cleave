@@ -19,8 +19,27 @@ The Hobbit.m4b
 
 ## Installation
 
+### pip
+
 ```sh
 pip install chapter-mp3s
+```
+
+### Container
+
+No Python or ffmpeg installation needed — everything is bundled:
+
+```sh
+docker run --rm -v "$PWD":/data ghcr.io/gregswift/chapter-mp3s /data/book.m4b
+```
+
+To write output to a specific directory on the host:
+
+```sh
+docker run --rm \
+  -v "$PWD":/data \
+  -v "$HOME/Audiobooks":/out \
+  ghcr.io/gregswift/chapter-mp3s -o /out /data/book.m4b
 ```
 
 ## Usage
@@ -156,6 +175,15 @@ make lint-py
 # Build
 make build-python
 ```
+
+## Performance notes
+
+Chapters are extracted concurrently using multiple ffmpeg processes. On
+Linux this is typically fast. On macOS, running inside a container
+(Docker/Podman) can be significantly slower due to the overhead of
+file I/O through the container VM's filesystem bridge. For best
+performance on macOS, install and run natively rather than via the
+container image.
 
 ## License
 
