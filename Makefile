@@ -73,11 +73,7 @@ BASE_ENV = -e UV_LINK_MODE=copy
 BASE_WORKDIR = -w $(CONTAINER_WORK_DIR) -v "$(CURDIR)":$(CONTAINER_WORK_DIR):Z
 
 # Container based commands to for use handling target steps
-LIKELY_CONTAINER_NETWORK_NAME = $(notdir $(shell pwd))
-CONTAINER_NETWORK ?= --network $(shell $(CONTAINER_ENGINE) network ls | awk 'BEGIN { n="bridge" } /github_action/ || /$(LIKELY_CONTAINER_NETWORK_NAME)/ {n=$$2} END {print n}')
-$(info Identified container network: "$(lastword $(CONTAINER_NETWORK))")
-
-BASE_COMMAND = $(CONTAINER_ENGINE) run $(CONTAINER_SWITCHES) $(BASE_ENV) $(BASE_WORKDIR) $(CONTAINER_NETWORK)
+BASE_COMMAND = $(CONTAINER_ENGINE) run $(CONTAINER_SWITCHES) $(BASE_ENV) $(BASE_WORKDIR)
 PY_COMMAND = $(BASE_COMMAND) $(PY_CONTAINER_IMAGE):$(PY_CONTAINER_VERSION)
 UV_COMMAND = $(PY_COMMAND) uv
 
